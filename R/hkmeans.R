@@ -1,4 +1,4 @@
-#' Hierarchcal divisive k-means clustering.
+#' Hierarchcal divisive k-means clustering
 #'
 #' This function recursively splits an n x p matrix into smaller and smaller subsets,
 #' returning a "dendrogram" object.
