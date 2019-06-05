@@ -2,7 +2,7 @@
 % Please edit documentation in R/hkmeans.R
 \name{hkmeans}
 \alias{hkmeans}
-\title{Hierarchcal divisive k-means clustering.}
+\title{Hierarchcal divisive k-means clustering}
 \usage{
 hkmeans(x, ...)
 }

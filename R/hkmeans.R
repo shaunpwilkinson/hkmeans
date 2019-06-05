@@ -47,10 +47,9 @@
 #' dnd <- dendrapply(dnd, rectify_labels, x = x)
 #'
 #' ## Create a color palette as a data.frame with one row for each species
-#' uniqspp <- as.character(unique(iris$Species))
+#' uniqspp <- as.character(unique(iris50$Species))
 #' colormap <- data.frame(Species = uniqspp, color = rainbow(n = length(uniqspp)))
 #' colormap[, 2] <- c("red", "blue", "green")
-#' colormap
 #'
 #' ## Color the inner dendrogram edges
 #' color_dendro <- function(node, colormap){
@@ -150,12 +149,9 @@ hkmeans <- function(x, ...){
       for(i in 1:2){
         node[[i]] <- 1
         attr(node[[i]], "kvector") <- km$centers[i, ]
-        #attr(node[[i]], "meanlength") <- mean(lens[km$cluster == i])
         kmatrix <- rbind(attr(node, "kvector"), attr(node[[i]], "kvector"))
         rownames(kmatrix) <- paste(1:2) # needed for c++ function
-        #diffheight <- .kdist(kmatrix, from = 0, to = 1, seqlengths = meanlengths, k = k)[1]
         diffheight <- sqrt(sum((apply(kmatrix, 2, function(v) v[1] - v[2]))^2))
-
         attr(node[[i]], "height") <- attr(node, "height") - diffheight ## cleaned up later
         attr(node[[i]], "leaf") <- TRUE
         attr(node[[i]], "sequences") <- attr(node, "sequences")[km$cluster == i]
