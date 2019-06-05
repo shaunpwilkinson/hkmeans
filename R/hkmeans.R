@@ -73,8 +73,8 @@
 ################################################################################
 hkmeans <- function(x, ...){
   stopifnot(is.matrix(x))
-  nseq <- nrow(x)
-  if(nseq == 1){# singleton tree (leaf)
+  nrec <- nrow(x)
+  if(nrec == 1){# singleton tree (leaf)
     tree <- 1
     attr(tree, "leaf") <- TRUE
     attr(tree, "height") <- 0
@@ -84,12 +84,12 @@ hkmeans <- function(x, ...){
     class(tree) <- "dendrogram"
     return(tree)
   }
-  if(is.null(rownames(x))) rownames(x) <- paste0("RECORD", 1:nseq)
+  if(is.null(rownames(x))) rownames(x) <- paste0("RECORD", 1:nrec)
   catchnames <- rownames(x)
   charstrings <- apply(x, 1, paste0, collapse = "")
   hashes <- openssl::md5(charstrings)
   duplicates <- duplicated(hashes)
-  nuseq <- sum(!duplicates)
+  nurec <- sum(!duplicates)
   point <- function(h){
     uh <- unique(h)
     pointers <- seq_along(uh)
@@ -118,29 +118,29 @@ hkmeans <- function(x, ...){
   kcounts <- x
   tree <- 1
   attr(tree, "leaf") <- TRUE
-  attr(tree, "sequences") <- 1:nuseq
+  attr(tree, "records") <- 1:nurec
   attr(tree, "height") <- 0
   attr(tree, "kvector") <- apply(kcounts, 2, mean)
   ## define recursive splitting functions
   clustern <- function(node, kcs, ...){
-    if(!is.list(node) & length(attr(node, "sequences")) > 1){
+    if(!is.list(node) & length(attr(node, "records")) > 1){
       ## fork leaves only
-      seqs <- kcs[attr(node, "sequences"), , drop = FALSE]
+      recs <- kcs[attr(node, "records"), , drop = FALSE]
       errfun <- function(er){## used when >3 uniq hashes but kmeans throws error
         out <- list()
-        nrs <- nrow(seqs)
+        nrs <- nrow(recs)
         cls <- rep(1, nrs)
         cls[sample(1:nrs, 1)] <- 2 ## peel randomly selected one off
         out$cluster <- cls
-        out$centers <- rbind(apply(seqs[cls == 1, , drop = FALSE], 2, mean),
-                             apply(seqs[cls == 2, , drop = FALSE], 2, mean))
+        out$centers <- rbind(apply(recs[cls == 1, , drop = FALSE], 2, mean),
+                             apply(recs[cls == 2, , drop = FALSE], 2, mean))
         return(out)
       }
-      km <- if(nrow(seqs) > 2){
-        tryCatch(kmeans(seqs, centers = 2, ... = ...),
+      km <- if(nrow(recs) > 2){
+        tryCatch(kmeans(recs, centers = 2, ... = ...),
                  error = errfun, warning = errfun)
       }else{
-        list(cluster = 1:2, centers = seqs)
+        list(cluster = 1:2, centers = recs)
       }
       tmpattr <- attributes(node)
       node <- vector(mode = "list", length = 2)
@@ -154,7 +154,7 @@ hkmeans <- function(x, ...){
         diffheight <- sqrt(sum((apply(kmatrix, 2, function(v) v[1] - v[2]))^2))
         attr(node[[i]], "height") <- attr(node, "height") - diffheight ## cleaned up later
         attr(node[[i]], "leaf") <- TRUE
-        attr(node[[i]], "sequences") <- attr(node, "sequences")[km$cluster == i]
+        attr(node[[i]], "records") <- attr(node, "records")[km$cluster == i]
       }
     }
     return(node)
@@ -171,21 +171,21 @@ hkmeans <- function(x, ...){
   tree <- phylogram::reposition(tree)
   if(any(duplicates)){
     reduplicate <- function(node, pointers){
-      attr(node, "sequences") <- which(pointers %in% attr(node, "sequences"))
+      attr(node, "records") <- which(pointers %in% attr(node, "records"))
       if(is.leaf(node)){
-        lams <- length(attr(node, "sequences"))
+        lams <- length(attr(node, "records"))
         if(lams > 1){
           labs <- attr(node, "label")
           hght <- attr(node, "height")
-          seqs <- attr(node, "sequences")
+          recs <- attr(node, "records")
           node <- vector(mode = "list", length = lams)
           attr(node, "height") <- hght
-          attr(node, "sequences") <- seqs
+          attr(node, "records") <- recs
           for(i in 1:lams){
             node[[i]] <- 1
             attr(node[[i]], "height") <- hght
             attr(node[[i]], "label") <- labs[i]
-            attr(node[[i]], "sequences") <- seqs[i]
+            attr(node[[i]], "records") <- recs[i]
             attr(node[[i]], "leaf") <- TRUE
           }
         }
@@ -196,23 +196,23 @@ hkmeans <- function(x, ...){
     tree <- phylogram::remidpoint(tree)
   }
   label <- function(node, labs){
-    if(is.leaf(node)) attr(node, "label") <- labs[attr(node, "sequences")]
+    if(is.leaf(node)) attr(node, "label") <- labs[attr(node, "records")]
     return(node)
   }
   tree <- dendrapply(tree, label, labs = catchnames)
-  rmseqs <- function(node){
+  rmrecs <- function(node){
     if(is.leaf(node)){
       tmpattr <- attributes(node)
-      node[] <- tmpattr$sequences
-      tmpattr$sequences <- NULL
+      node[] <- tmpattr$records
+      tmpattr$records <- NULL
       tmpattr$kvector <- NULL
       attributes(node) <- tmpattr
     }else{
-      attr(node, "sequences") <- NULL
+      attr(node, "records") <- NULL
       attr(node, "kvector") <- NULL
     }
     return(node)
   }
-  tree <- dendrapply(tree, rmseqs)
+  tree <- dendrapply(tree, rmrecs)
   return(tree)
 }

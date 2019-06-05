@@ -53,10 +53,9 @@ rectify_labels <- function(node, x){
 dnd <- dendrapply(dnd, rectify_labels, x = x)
 
 ## Create a color palette as a data.frame with one row for each species
-uniqspp <- as.character(unique(iris$Species))
+uniqspp <- as.character(unique(iris50$Species))
 colormap <- data.frame(Species = uniqspp, color = rainbow(n = length(uniqspp)))
 colormap[, 2] <- c("red", "blue", "green")
-colormap
 
 ## Color the inner dendrogram edges
 color_dendro <- function(node, colormap){
